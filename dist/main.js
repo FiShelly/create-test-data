@@ -10,7 +10,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var util = {
+var Util = {
     deepClone: function deepClone(obj) {
         return JSON.parse(JSON.stringify(obj));
     },
@@ -219,24 +219,24 @@ var defaultOpts = {
 
 var CreateTestData = {
     createData: function createData(option) {
-        if (util.isEmpty(option)) {
+        if (Util.isEmpty(option)) {
             throw new Error('the options must be object or array');
         }
         var repeat = 0;
         var func = null;
         if ((arguments.length <= 1 ? 0 : arguments.length - 1) >= 1) {
-            if (util.isNumeric(arguments.length <= 1 ? undefined : arguments[1])) {
+            if (Util.isNumeric(arguments.length <= 1 ? undefined : arguments[1])) {
                 repeat = arguments.length <= 1 ? undefined : arguments[1];
             }
-            if (util.isFunction(arguments.length <= 1 ? undefined : arguments[1])) {
+            if (Util.isFunction(arguments.length <= 1 ? undefined : arguments[1])) {
                 func = arguments.length <= 1 ? undefined : arguments[1];
-            } else if (util.isFunction(arguments.length <= 2 ? undefined : arguments[2])) {
+            } else if (Util.isFunction(arguments.length <= 2 ? undefined : arguments[2])) {
                 func = arguments.length <= 2 ? undefined : arguments[2];
             }
         }
         var optType = ['Array', 'Object', 'String', 'Numeric'];
         for (var i = 0; i < optType.length; i++) {
-            if (util['is' + optType[i]](option)) {
+            if (Util['is' + optType[i]](option)) {
                 return this['useBy' + optType[i]](option, repeat, func);
             }
         }
@@ -258,7 +258,7 @@ var CreateTestData = {
         var _this = this;
 
         func = (func || function () {
-            return _this.packData(num, util.randomString(CONSTANT.DEFAULT_MIN_NUM));
+            return _this.packData(num, Util.randomString(CONSTANT.DEFAULT_MIN_NUM));
         }).bind(this);
         return this.__commonRepeat(func, repeat);
     },
@@ -266,7 +266,7 @@ var CreateTestData = {
         var _this2 = this;
 
         func = (func || function () {
-            return _this2.packData(key, util.randomString(CONSTANT.DEFAULT_MIN_NUM));
+            return _this2.packData(key, Util.randomString(CONSTANT.DEFAULT_MIN_NUM));
         }).bind(this);
         return this.__commonRepeat(func, repeat);
     },
@@ -274,7 +274,7 @@ var CreateTestData = {
         var _this3 = this;
 
         option = option.filter(function (val) {
-            return util.isObject(val);
+            return Util.isObject(val);
         }).map(function (val) {
             return _this3.__checkOption(val);
         });
@@ -324,25 +324,35 @@ var CreateTestData = {
         if (!CONSTANT.TYPE.includes(opts.type)) {
             opts.type = CONSTANT.TYPE[0];
         }
-        opts.type = util.__firstStrUpCase(opts.type);
+        opts.type = Util.__firstStrUpCase(opts.type);
         return opts;
     },
     __useKey2GenOption: function __useKey2GenOption(key) {
         var defaultOptions = _extends({}, defaultOpts);
         defaultOptions.key = key;
-        defaultOptions.type = util.__firstStrUpCase(defaultOptions.type);
+        defaultOptions.type = Util.__firstStrUpCase(defaultOptions.type);
         return defaultOptions;
     },
     __checkOption: function __checkOption(option) {
         var _this5 = this;
 
-        var opt_keys = Object.keys(option);
-        var opt_len = opt_keys.length;
         var default_keys = Object.keys(defaultOpts);
         var default_len = default_keys.length;
+        var opt_keys = Object.keys(option);
+        var opt_len = opt_keys.length;
         var mapHandle = function mapHandle(val) {
             return _this5.__useKey2GenOption(val);
         };
+
+        if (!option.hasOwnProperty('isFixed')) {
+            if (default_keys.filter(function (val) {
+                return opt_keys.includes(val);
+            }).length === default_len - 1) {
+                option.isFixed = false;
+                opt_keys.push('isFixed');
+                opt_len += 1;
+            }
+        }
 
         if (opt_len < default_len) {
             return opt_keys.map(mapHandle);
@@ -351,7 +361,7 @@ var CreateTestData = {
                 return opt_keys.includes(val);
             }).length === default_len) {
                 var newOpts = opt_keys.filter(function (val) {
-                    return default_keys !== val;
+                    return !default_keys.includes(val);
                 }).map(mapHandle);
                 return [].concat(_toConsumableArray(newOpts), [this.__useDefault2GenOption(option)]);
             } else {
@@ -362,13 +372,13 @@ var CreateTestData = {
     __genData: function __genData(option, result) {
         var val = null;
         if (option.isFixed) {
-            val = util['random' + option.type](option.max);
+            val = Util['random' + option.type](option.max);
         } else {
-            val = util['random' + option.type](option.min, option.max);
+            val = Util['random' + option.type](option.min, option.max);
         }
         this.packData(option.key, val, result);
     }
 };
 
 exports.CreateTestData = CreateTestData;
-exports.util = util;
+exports.Util = Util;

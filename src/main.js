@@ -1,4 +1,4 @@
-const util = {
+const Util = {
     deepClone (obj) {
         return JSON.parse(JSON.stringify(obj));
     },
@@ -174,24 +174,24 @@ const defaultOpts = {
 
 const CreateTestData = {
     createData (option, ...args) {
-        if (util.isEmpty(option)) {
+        if (Util.isEmpty(option)) {
             throw new Error('the options must be object or array');
         }
         let repeat = 0;
         let func = null;
         if (args.length >= 1) {
-            if (util.isNumeric(args[0])) {
+            if (Util.isNumeric(args[0])) {
                 repeat = args[0];
             }
-            if (util.isFunction(args[0])) {
+            if (Util.isFunction(args[0])) {
                 func = args[0];
-            } else if (util.isFunction(args[1])) {
+            } else if (Util.isFunction(args[1])) {
                 func = args[1];
             }
         }
         const optType = ['Array', 'Object', 'String', 'Numeric'];
         for (let i = 0; i < optType.length; i++) {
-            if (util[`is${optType[i]}`](option)) {
+            if (Util[`is${optType[i]}`](option)) {
                 return this[`useBy${optType[i]}`](option, repeat, func);
             }
         }
@@ -214,17 +214,17 @@ const CreateTestData = {
     },
 
     useByNumeric (num, repeat, func) {
-        func = (func || (() => this.packData(num, util.randomString(CONSTANT.DEFAULT_MIN_NUM)))).bind(this);
+        func = (func || (() => this.packData(num, Util.randomString(CONSTANT.DEFAULT_MIN_NUM)))).bind(this);
         return this.__commonRepeat(func, repeat);
     },
 
     useByString (key, repeat, func) {
-        func = (func || (() => this.packData(key, util.randomString(CONSTANT.DEFAULT_MIN_NUM)))).bind(this);
+        func = (func || (() => this.packData(key, Util.randomString(CONSTANT.DEFAULT_MIN_NUM)))).bind(this);
         return this.__commonRepeat(func, repeat);
     },
 
     useByArray (option, repeat, func) {
-        option = option.filter(val => util.isObject(val)).map(val => this.__checkOption(val));
+        option = option.filter(val => Util.isObject(val)).map(val => this.__checkOption(val));
 
         let newOpts = [];
         option.forEach(val => {
@@ -273,29 +273,37 @@ const CreateTestData = {
         if (!CONSTANT.TYPE.includes(opts.type)) {
             opts.type = CONSTANT.TYPE[0];
         }
-        opts.type = util.__firstStrUpCase(opts.type);
+        opts.type = Util.__firstStrUpCase(opts.type);
         return opts;
     },
 
     __useKey2GenOption (key) {
         const defaultOptions = {...defaultOpts};
         defaultOptions.key = key;
-        defaultOptions.type = util.__firstStrUpCase(defaultOptions.type);
+        defaultOptions.type = Util.__firstStrUpCase(defaultOptions.type);
         return defaultOptions;
     },
 
     __checkOption (option) {
-        const opt_keys = Object.keys(option);
-        const opt_len = opt_keys.length;
         const default_keys = Object.keys(defaultOpts);
         const default_len = default_keys.length;
+        const opt_keys = Object.keys(option);
+        let opt_len = opt_keys.length;
         const mapHandle = val => this.__useKey2GenOption(val);
+
+        if (!option.hasOwnProperty('isFixed')) {
+            if (default_keys.filter(val => opt_keys.includes(val)).length === (default_len - 1)) {
+                option.isFixed = false;
+                opt_keys.push('isFixed');
+                opt_len += 1;
+            }
+        }
 
         if (opt_len < default_len) {
             return opt_keys.map(mapHandle);
         } else {
             if (default_keys.filter(val => opt_keys.includes(val)).length === default_len) {
-                const newOpts = opt_keys.filter(val => default_keys !== val).map(mapHandle);
+                const newOpts = opt_keys.filter(val => !default_keys.includes(val)).map(mapHandle);
                 return [...newOpts, this.__useDefault2GenOption(option)];
             } else {
                 return opt_keys.map(mapHandle);
@@ -305,12 +313,12 @@ const CreateTestData = {
     __genData (option, result) {
         let val = null;
         if (option.isFixed) {
-            val = util[`random${option.type}`](option.max);
+            val = Util[`random${option.type}`](option.max);
         } else {
-            val = util[`random${option.type}`](option.min, option.max);
+            val = Util[`random${option.type}`](option.min, option.max);
         }
         this.packData(option.key, val, result);
     }
 };
 
-export { CreateTestData, util };
+export { CreateTestData, Util };
